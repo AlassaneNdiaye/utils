@@ -1,9 +1,9 @@
+import collections.abc
 import subprocess
-from collections.abc import Iterable, Mapping
-from typing import Any, Callable, Optional
+from typing import Callable, Hashable, Mapping, Optional, Sequence
 
 
-def debug_decorator(func: Callable[..., Any]):
+def debug_decorator(func: Callable[..., object]):
     def wrapper(*args, **kwargs):
         parameters = [str(arg) for arg in args]
         parameters.extend(
@@ -38,9 +38,27 @@ def execute_command(command: str, remote: Optional[str] = None, remote_key_path:
     return result
 
 
-def is_iterable(o: Any):
-    return isinstance(o, Iterable)
+def get_nested_attribute(o: object, attributes: Sequence[str], default: object = None):
+    return_value = o
+    for attribute in attributes:
+        if not hasattr(return_value, attribute):
+            return default
+        return_value = getattr(return_value, attribute)
+    return return_value
 
 
-def is_mapping(o: Any):
-    return isinstance(o, Mapping)
+def get_nested_value_from_dictionary(d: Mapping, keys: Sequence[Hashable], default: object = None):
+    return_value = d
+    for k in keys:
+        if not isinstance(return_value, collections.abc.Mapping) or k not in return_value:
+            return default
+        return_value = return_value[k]
+    return return_value
+
+
+def is_iterable(o: object) -> bool:
+    return isinstance(o, collections.abc.Iterable)
+
+
+def is_mapping(o: object) -> bool:
+    return isinstance(o, collections.abc.Mapping)
