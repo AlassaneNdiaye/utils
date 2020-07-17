@@ -1,6 +1,6 @@
 import collections.abc
 import subprocess
-from typing import Callable, Hashable, Mapping, Optional, Sequence
+from typing import Callable, Hashable, Mapping, MutableMapping, MutableSequence, Optional, Sequence, Union
 
 
 def debug_decorator(func: Callable[..., object]):
@@ -62,3 +62,19 @@ def is_iterable(o: object) -> bool:
 
 def is_mapping(o: object) -> bool:
     return isinstance(o, collections.abc.Mapping)
+
+
+def recursive_replace(o: Union[MutableMapping, MutableSequence], variables: Mapping[str, str]) -> None:
+    def recurse(nested_object):
+        if isinstance(nested_object, collections.abc.MutableMapping):
+            keys = nested_object.keys()
+        else:
+            keys = range(len(nested_object))
+        for k in keys:
+            v = nested_object[k]
+            if isinstance(v, collections.abc.MutableMapping) or isinstance(v, collections.abc.MutableSequence):
+                recurse(v)
+            else:
+                if isinstance(v, str):
+                    nested_object[k] = v.format(**variables)
+    recurse(o)
