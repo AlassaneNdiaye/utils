@@ -1,5 +1,6 @@
 import collections.abc
 import subprocess
+from shlex import quote
 from typing import Callable, Hashable, Mapping, MutableMapping, MutableSequence, Optional, Sequence, Union
 
 
@@ -22,10 +23,13 @@ def debug_decorator(func: Callable[..., object]):
 def execute_command(command: str, remote: Optional[str] = None, remote_key_path: Optional[str] = None,
                     executable: str = "/bin/bash"):
     if remote is not None:
+        command = quote(command)
+        remote = quote(remote)
         if remote_key_path is not None:
-            command = f'ssh {remote} -i {remote_key_path} "{command}"'
+            remote_key_path = quote(remote_key_path)
+            command = f'ssh {remote} -i {remote_key_path} {command}'
         else:
-            command = f'ssh {remote} "{command}"'
+            command = f'ssh {remote} {command}'
 
     completed_process = subprocess.run(command, shell=True, executable=executable,
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -35,6 +39,7 @@ def execute_command(command: str, remote: Optional[str] = None, remote_key_path:
         "stdout": completed_process.stdout.decode("utf-8").strip(),
         "stderr": completed_process.stderr.decode("utf-8").strip()
     }
+
     return result
 
 
