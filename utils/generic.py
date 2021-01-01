@@ -1,23 +1,28 @@
 import collections.abc
+import logging
 import subprocess
 from shlex import quote
-from typing import Callable, Hashable, Mapping, MutableMapping, MutableSequence, Optional, Sequence, Union
+from typing import Callable, Hashable, Mapping, MutableMapping, MutableSequence, Optional, Sequence, TypeVar, Union
+
+FunctionType = TypeVar('FunctionType', bound=Callable)
 
 
-def debug_decorator(func: Callable[..., object]):
-    def wrapper(*args, **kwargs):
-        parameters = [str(arg) for arg in args]
-        parameters.extend(
-            [f"{k}={v}" for k, v in kwargs.items()]
-        )
-        parameters = ", ".join(parameters)
+def debug_decorator(logger: logging.Logger):
+    def debug_decorator_no_arg(func: FunctionType) -> FunctionType:
+        def wrapper(*args, **kwargs):
+            parameters = [str(arg) for arg in args]
+            parameters.extend(
+                [f'{k}={v}' for k, v in kwargs.items()]
+            )
+            parameters = ', '.join(parameters)
 
-        print(f"Calling {func.__name__}({parameters})")
-        return_value = func(*args, **kwargs)
-        print(f"{func.__name__} returned {return_value}")
+            logger.debug(f'{func.__qualname__}({parameters}) ...')
+            return_value = func(*args, **kwargs)
+            logger.debug(f'{func.__qualname__}({parameters}) -> {return_value}')
 
-        return return_value
-    return wrapper
+            return return_value
+        return wrapper
+    return debug_decorator_no_arg
 
 
 def execute_command(command: str, remote: Optional[str] = None, remote_key_path: Optional[str] = None,
